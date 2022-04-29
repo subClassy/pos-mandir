@@ -1,11 +1,13 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 // @mui
 import { styled } from '@mui/material/styles';
 import { Container, Typography } from '@mui/material';
+import { useAuth } from '../sections/auth';
 // components
 import Page from '../components/Page';
 // sections
 import { LoginForm } from '../sections/auth/login';
-
 // ----------------------------------------------------------------------
 
 const RootStyle = styled('div')(({ theme }) => ({
@@ -43,6 +45,16 @@ const ContentStyle = styled('div')(({ theme }) => ({
 // ----------------------------------------------------------------------
 
 export default function Login() {
+  const navigate = useNavigate();
+  const [logged] = useAuth();
+
+  useEffect(() => {
+    if (logged === true) 
+    {
+      navigate('/dashboard', { replace: true })
+    } 
+  })
+  
   return (
     <Page title="Login">
       <RootStyle>

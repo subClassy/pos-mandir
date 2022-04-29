@@ -3,17 +3,23 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFormik, Form, FormikProvider } from 'formik';
 // material
-import { Stack, TextField, IconButton, InputAdornment } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { Stack, TextField, IconButton, InputAdornment, Alert, AlertTitle } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 // component
 import Iconify from '../../../components/Iconify';
-
+import { login } from '../index'
 // ----------------------------------------------------------------------
+
+const AlertStyle = styled(Alert)(({ theme }) => ({
+  width: '100%'
+}));
 
 export default function LoginForm() {
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
+  const [incorrectCreds, setMsgIncorrectCreds] = useState(false);
 
   const LoginSchema = Yup.object().shape({
     username: Yup.string().required('Username is required'),
@@ -26,15 +32,32 @@ export default function LoginForm() {
       password: '',
     },
     validationSchema: LoginSchema,
-    onSubmit: () => {
-      navigate('/dashboard', { replace: true });
+    onSubmit: (values) => {
+      fetch('http://localhost:5000/api/login', {
+        method: 'post',
+        body: JSON.stringify(values)
+      }).then(r => r.json())
+        .then(token => {
+          setSubmitting(false)
+          if (token.accessToken){
+            login(token)
+            navigate('/dashboard', { replace: true })
+          }
+          else {
+            handleMsgIncorrectCreds();
+          }
+        })
     },
   });
 
-  const { errors, touched, isSubmitting, handleSubmit, getFieldProps } = formik;
+  const { errors, touched, isSubmitting, setSubmitting, handleSubmit, getFieldProps } = formik;
 
   const handleShowPassword = () => {
     setShowPassword((show) => !show);
+  };
+
+  const handleMsgIncorrectCreds = () => {
+    setMsgIncorrectCreds((show) => true)
   };
 
   return (
@@ -75,6 +98,14 @@ export default function LoginForm() {
         <LoadingButton fullWidth size="large" type="submit" variant="contained" loading={isSubmitting}>
           Login
         </LoadingButton>
+
+        <Stack display={incorrectCreds ? 'block' : 'none'} direction="row" alignItems="center" justifyContent="center" sx={{ my: 2 }}>
+          <AlertStyle severity="error">
+            <AlertTitle>Error</AlertTitle>
+            Incorrect Username or Password
+          </AlertStyle>
+        </Stack>
+
       </Form>
     </FormikProvider>
   );
